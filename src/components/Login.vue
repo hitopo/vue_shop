@@ -6,7 +6,7 @@
         <img src="../assets/logo.png" />
       </div>
       <!-- 登录表单区域 -->
-      <el-form class="login_form" :model="loginForm">
+      <el-form class="login_form">
         <!-- 用户名 -->
         <el-form-item>
           <el-input prefix-icon="iconfont icon-user"></el-input>
@@ -27,12 +27,12 @@
 
 <script>
 export default {
-  data() {
-    return {
-      // 登录表单的数据绑定对象
-      loginForm: {}
-    }
-  }
+  // data() {
+  //   return {
+  //     // 登录表单的数据绑定对象
+  //     loginForm: {}
+  //   }
+  // }
 }
 </script>
 

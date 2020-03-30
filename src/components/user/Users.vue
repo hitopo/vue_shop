@@ -212,7 +212,6 @@ export default {
     },
     // pagesize改变事件
     handleSizeChange(newSize) {
-      // console.log(newSize)
       this.queryInfo.pagesize = newSize
       this.getUserList()
     },
@@ -262,7 +261,7 @@ export default {
       this.editForm = res.data
       this.editDialogVisible = true
     },
-    // 监听修改对话框的事件
+    // 关闭修改对话框的事件
     editDialogClose() {
       this.$refs.editFormRef.resetFields()
     },
@@ -304,7 +303,6 @@ export default {
       ).catch(err => err)
       // 确认删除就会产生一个字符串 confirm
       // 取消删除就会产生一个字符串 cancel
-      console.log(confirmResult)
       if (confirmResult !== 'confirm') {
         return this.$message.info('取消删除')
       }

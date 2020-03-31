@@ -98,7 +98,6 @@ export default {
       }
       // 获取左侧菜单数据
       this.menulist = res.data
-      console.log(this.menulist)
     },
 
     // 点击折叠所有的菜单项

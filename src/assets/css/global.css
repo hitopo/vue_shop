@@ -5,6 +5,7 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  min-width: 1080px;
 }
 
 .el-breadcrumb {
@@ -21,6 +22,6 @@ body,
   font-size: 12px;
 }
 
-.el-pagination{
+.el-pagination {
   margin-top: 15px;
 }

@@ -177,7 +177,7 @@ export default {
         params: this.queryInfo
       })
       if (res.meta.status !== 200) {
-        this.$message.error(res.meta.msg)
+        return this.$message.error(res.meta.msg)
       }
       this.catelist = res.data.result
       this.total = res.data.total

@@ -25,3 +25,11 @@ body,
 .el-pagination {
   margin-top: 15px;
 }
+
+/* 调整级联菜单的高度，避免显示不了 */
+.el-cascader__dropdown {
+  height: 200px;
+}
+.el-cascader-panel {
+  height: 200px !important;
+}

@@ -71,7 +71,6 @@
       width="50%"
       @close="addCateDialogClosed"
     >
-      <!-- 内容主题区域 -->
       <el-form :model="addCateForm" :rules="cateFormRules" ref="addCateFormRef" label-width="100px">
         <el-form-item label="分类名称:" prop="cat_name">
           <el-input v-model="addCateForm.cat_name"></el-input>
@@ -84,7 +83,6 @@
             :props="cascaderProps"
             v-model="selectedKeys"
             @change="parentCateChanged"
-            clearable
           ></el-cascader>
         </el-form-item>
       </el-form>
@@ -281,7 +279,7 @@ export default {
     },
     // 删除分类
     async removeCateById(id) {
-       const confirmResult = await this.$confirm(
+      const confirmResult = await this.$confirm(
         '此操作将永久删除该分类, 是否继续?',
         '提示',
         {

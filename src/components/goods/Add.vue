@@ -24,7 +24,7 @@
       <el-form
         :model="addForm"
         :rules="addFormRules"
-        ref="ruleForm"
+        ref="addFormRef"
         label-width="100px"
         label-position="top"
       >
@@ -60,18 +60,49 @@
           </el-tab-pane>
           <el-tab-pane label="商品参数" name="1">
             <!-- 渲染表单的Item项目 -->
-            
+            <el-form-item v-for="item in manyTableData" :key="item.attr_id" :label="item.attr_name">
+              <el-checkbox-group v-model="item.attr_vals">
+                <el-checkbox v-for="(cb,i) in item.attr_vals" :key="i" :label="cb" border></el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
           </el-tab-pane>
-          <el-tab-pane label="商品属性" name="2">商品属性</el-tab-pane>
-          <el-tab-pane label="商品图片" name="3">商品图片</el-tab-pane>
-          <el-tab-pane label="商品内容" name="4">商品内容</el-tab-pane>
+          <el-tab-pane label="商品属性" name="2">
+            <el-form-item v-for="item in onlyTableData" :key="item.attr_id" :label="item.attr_name">
+              <el-input v-model="item.attr_vals"></el-input>
+            </el-form-item>
+          </el-tab-pane>
+          <el-tab-pane label="商品图片" name="3">
+            <el-upload
+              :action="uploadURL"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              list-type="picture"
+              :headers="headerObj"
+              :on-success="handleSuccess"
+            >
+              <el-button size="small" type="primary">点击上传</el-button>
+            </el-upload>
+          </el-tab-pane>
+          <el-tab-pane label="商品内容" name="4">
+            <!-- 富文本编辑器 -->
+            <quill-editor v-model="addForm.goods_introduce" />
+            <el-button type="primary" class="add_goods_btn" @click="addGoods">添加商品</el-button>
+          </el-tab-pane>
         </el-tabs>
       </el-form>
     </el-card>
+
+    <!-- 图片预览框 -->
+    <el-dialog title="图片预览" :visible.sync="previewVisible" width="50%">
+      <img :src="previewPath" alt class="preview_img" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
+// 导入lodash
+import _ from 'lodash'
+
 export default {
   data() {
     return {
@@ -83,7 +114,13 @@ export default {
         goods_weight: 0,
         goods_number: 0,
         // 商品所属的分类id
-        goods_cat: []
+        goods_cat: [],
+        // 图片数组
+        pics: [],
+        // 商品介绍
+        goods_introduce: '',
+        // 处理动态参数和静态属性
+        attrs: []
       },
       // 添加表单的验证对象
       addFormRules: {
@@ -127,7 +164,21 @@ export default {
         label: 'cat_name',
         value: 'cat_id',
         children: 'children'
-      }
+      },
+      // 动态参数
+      manyTableData: {},
+      // 静态属性
+      onlyTableData: {},
+      // 上传图片的地址
+      uploadURL: 'http://127.0.0.1:8888/api/private/v1/upload',
+      // 文件上传组件的请求头
+      headerObj: {
+        Authorization: window.sessionStorage.getItem('token')
+      },
+      // 上传的图片路径
+      previewPath: '',
+      // 是否显示预览框
+      previewVisible: false
     }
   },
   created() {
@@ -158,8 +209,8 @@ export default {
     },
     // 切换标签页
     async tabClicked() {
-      // 访问参数面板
       if (this.activeIndex === '1') {
+        // 访问参数面板
         const { data: res } = await this.$http.get(
           `categories/${this.cateId}/attributes`,
           {
@@ -169,8 +220,81 @@ export default {
         if (res.meta.status !== 200) {
           this.$message.error(res.meta.msg)
         }
-        console.log(res.data)
+        res.data.forEach(item => {
+          item.attr_vals =
+            item.attr_vals.length === 0 ? [] : item.attr_vals.split(' ')
+        })
+        this.manyTableData = res.data
+      } else if (this.activeIndex === '2') {
+        // 访问属性面板
+        const { data: res } = await this.$http.get(
+          `categories/${this.cateId}/attributes`,
+          {
+            params: { sel: 'only' }
+          }
+        )
+        if (res.meta.status !== 200) {
+          this.$message.error(res.meta.msg)
+        }
+        this.onlyTableData = res.data
       }
+    },
+    // 图片预览效果
+    handlePreview(file) {
+      this.previewPath = file.response.data.url
+      this.previewVisible = true
+    },
+    // 点击移除图片的操作
+    handleRemove() {},
+    // 图片上传成功的钩子函数
+    handleSuccess(response) {
+      // 拼接得到一个图片信息对象
+      const picInfo = { pic: response.data.tmp_path }
+      this.addForm.pics.push(picInfo)
+    },
+    // 想要移除的路径
+    handleRemove(file) {
+      // 在数组中找到对应的删除的对象， 删除掉
+      const filePath = file.response.data.tmp_path
+      const i = this.addForm.pics.findIndex(x => x.pic === filePath)
+      this.addForm.pics.splice(i, 1)
+    },
+    // 添加商品
+    addGoods() {
+      this.$refs.addFormRef.validate(async valid => {
+        if (!valid) {
+          return this.$message.error('请填写必要的表单项！')
+        }
+        // 执行添加的逻辑
+        // 这里必须先深拷贝分类数组，因为双向绑定，这里更改了addForm的goods_cat位字符串，后面的标签就会出错
+        const form = _.cloneDeep(this.addForm)
+        form.goods_cat = form.goods_cat.join(',')
+        // 处理动态参数
+        this.manyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals.join(' ')
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        // 处理静态属性
+        this.onlyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        form.attrs = this.addForm.attrs
+        // 发送网络请求保存商品信息
+        //  商品名称必须是唯一的
+        const { data: res } = await this.$http.post('goods', form)
+        if (res.meta.status !== 201) {
+          return this.$message.error(res.meta.msg)
+        }
+        this.$message.success(res.meta.msg)
+        this.$router.push('/goods')
+      })
     }
   },
   computed: {
@@ -185,4 +309,14 @@ export default {
 </script>
 
 <style scoped>
+.el-checkbox {
+  margin: 0 10px 0 0 !important;
+}
+.preview_img {
+  width: 100%;
+}
+
+.add_goods_btn {
+  margin-top: 15px;
+}
 </style>
